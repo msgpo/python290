@@ -1,0 +1,129 @@
+
+# # Load the exam scores training data
+import numpy as np
+import matplotlib.pyplot as plt
+
+L = []
+# with open('exam_scores_training.txt') as f:
+with open('exam_scores_training_data.txt') as f:
+    for line in f:
+        L.append(line.split())
+np.random.shuffle(L) #randomize the training examples
+
+L2 = []
+for k in L:
+    L2.append(list(map(lambda xd: float(xd), k)))
+# print(L2)
+
+
+#theta = np.array([0.0, 0.0, 0.01])
+theta = np.array([-50, 0.1, 5]) # initial guess for theta's
+
+L2x = []
+L2y = []
+LX = []
+
+for d in L2:
+    L2x.append(d[:2])
+    LX.append(d[:2])
+    L2y.append(d[2])
+
+print(L2x) #test scores 1 and 2
+print(LX) #the same as L2x
+print(L2y) #classifier
+
+
+for k in LX:
+    k.insert(0, 1)
+X = (np.array(LX)).transpose() # array containing training examples
+M = len(X.transpose())
+x = np.array(L2x)
+y = np.array(L2y)
+
+x1 = x.transpose()[0,:]
+x2 = x.transpose()[1,:]
+
+z = np.dot(theta, X)
+
+
+# scatter plot the data
+plt.close('all')
+arg_0 = np.where(y == 0)
+arg_1 = np.where(y == 1)
+
+fig1, ax = plt.subplots()
+passed = ax.scatter(x1[arg_1], x2[arg_1], marker='o', color='b', label='passed')
+failed = ax.scatter(x1[arg_0], x2[arg_0], marker='x', color='r', label='failed')
+ax.set_ylim(-5, 105); ax.set_xlim(-5, 105)
+ax.set_xlabel('exam 1'); ax.set_ylabel('exam 2')
+ax.set_title('Exam Scores and Pass/Fail')
+ax.legend([passed, failed], ['passed', 'failed'], loc=2)
+plt.show(block=False)
+plt.close(fig1)
+
+
+xv = np.arange(0,100)
+yv = (-1/theta[2])*(theta[0] + theta[1]*xv)
+
+# logistic regression dec bndry of initial guess
+plt.close('all')
+plt.close(fig1)
+arg_0 = np.where(y == 0)
+arg_1 = np.where(y == 1)
+
+fig2, ax = plt.subplots()
+passed = ax.scatter(x1[arg_1], x2[arg_1], marker='o', color='b', label='passed')
+failed = ax.scatter(x1[arg_0], x2[arg_0], marker='x', color='r', label='failed')
+dec_bndry, = ax.plot(xv, yv, color='green', linestyle='solid', linewidth=2, markersize=12,
+        label='dec bndry')
+ax.set_ylim(-5, 105); ax.set_xlim(-5, 105)
+ax.legend([passed, failed, dec_bndry], ('passed', 'failed', 'dec bndry'), loc=2)
+ax.set_xlabel('exam 1'); ax.set_ylabel('exam 2')
+ax.set_title('Exam Scores and Pass/Fail: Log Reg DB')
+plt.show(block=False)
+plt.pause(1)
+plt.close(fig2)
+
+
+g = lambda z: np.divide(1, (1 + np.exp(-z))) # define sigmoid function
+L = lambda theta_: (-1/M)*np.sum(np.dot(y, np.log(g(np.dot(theta_, X))))
+                                 + np.dot((1-y), np.log(1-g(np.dot(theta_, X)))))
+h_theta = lambda theta_, xx: np.divide(1, (1 + np.exp(-np.dot(theta_, xx))))
+
+
+Alpha = 5E-2 / M # learning rate. Also known as time-step for grad descent.
+# scale Alpha to # of training examples
+
+epoch_max = 30
+for j in range(1, epoch_max+1):
+    for i in range(M):
+        #for k in range(len(theta)):
+            #theta[k] = theta[k] + Alpha * (y[i] - h_theta(theta, X[:, i]))*X[:, i][k]
+        theta = theta + Alpha*(y[i] - h_theta(theta, X[:, i]))*X[:, i]
+
+    if j%1 == 0:
+        print(f'theta at iter. {j}: theta = {theta}')
+        print(f'Loss function at iter. {j}: L(theta) = {L(theta)}')
+        xv = np.arange(0, 100)
+        yv = (-1 / theta[2]) * (theta[0] + theta[1]*xv)
+
+        # logistic regression dec bndry
+        plt.close(fig2)
+        arg_0 = np.where(y == 0)
+        arg_1 = np.where(y == 1)
+
+        fig2, ax = plt.subplots()
+        passed = ax.scatter(x1[arg_1], x2[arg_1], marker='o', color='b', label='passed')
+        failed = ax.scatter(x1[arg_0], x2[arg_0], marker='x', color='r', label='failed')
+        dec_bndry, = ax.plot(xv, yv, color='green', linestyle='solid', linewidth=2, markersize=12,
+                             label='dec bndry')
+        ax.set_ylim(-5, 105)
+        ax.set_xlim(-5, 105)
+        ax.legend([passed, failed, dec_bndry], ('passed', 'failed', 'dec bndry'), loc=2)
+        ax.set_xlabel('exam 1')
+        ax.set_ylabel('exam 2')
+        ax.set_title('Exam Scores: Log Reg Stochastic Gradient Descent')
+        plt.show(block=False)
+        plt.pause(0.25)
+        plt.clf()
+        plt.close()
